@@ -65,7 +65,8 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.10.1"
+    "@actions/core": "^1.10.1",
+    "goreleaser-npm-publisher": "^0.0.1-alpha.10"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

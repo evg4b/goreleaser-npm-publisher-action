@@ -3005,7 +3005,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^10.2.2, glob@npm:^10.3.10":
+"glob@npm:^10.2.2, glob@npm:^10.3.10, glob@npm:^10.3.12":
   version: 10.3.12
   resolution: "glob@npm:10.3.12"
   dependencies:
@@ -3079,6 +3079,20 @@ __metadata:
   dependencies:
     get-intrinsic: "npm:^1.1.3"
   checksum: 10c0/505c05487f7944c552cee72087bf1567debb470d4355b1335f2c262d218ebbff805cd3715448fe29b4b380bae6912561d0467233e4165830efd28da241418c63
+  languageName: node
+  linkType: hard
+
+"goreleaser-npm-publisher@npm:^0.0.1-alpha.10":
+  version: 0.0.1-alpha.10
+  resolution: "goreleaser-npm-publisher@npm:0.0.1-alpha.10"
+  dependencies:
+    glob: "npm:^10.3.12"
+    lodash: "npm:^4.17.21"
+    picocolors: "npm:^1.0.0"
+    yargs: "npm:^17.7.2"
+  bin:
+    goreleaser-npm-publisher: dist/cli.js
+  checksum: 10c0/d0b4367d543353ee7faec3fa057d75cd9d962cd82e9cf26a12e1c7774da836ffdf22c54051938da8843f455250504f446ff1db4e1b9c4fb0c2c0d95da7d8db63
   languageName: node
   linkType: hard
 
@@ -5813,6 +5827,7 @@ __metadata:
     eslint-plugin-jest: "npm:^28.3.0"
     eslint-plugin-jsonc: "npm:^2.15.1"
     eslint-plugin-prettier: "npm:^5.1.3"
+    goreleaser-npm-publisher: "npm:^0.0.1-alpha.10"
     jest: "npm:^29.7.0"
     prettier: "npm:^3.2.5"
     prettier-eslint: "npm:^16.3.0"
@@ -6110,7 +6125,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:^17.3.1":
+"yargs@npm:^17.3.1, yargs@npm:^17.7.2":
   version: 17.7.2
   resolution: "yargs@npm:17.7.2"
   dependencies:

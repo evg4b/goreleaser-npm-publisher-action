@@ -1,23 +1,25 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'goreleaser-npm-publisher'
+description: 'Build and publish npm packages based on goreleaser output folder'
+author: 'Evgeny Abramovich'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: 'heart'
+  icon: 'package'
   color: 'red'
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  project:
+    description: 'Path to the project with was built by GoReleaser'
     required: true
-    default: '1000'
-
-# Define your outputs here.
-outputs:
-  time:
-    description: 'Your output description here'
+    default: '.'
+  builder:
+    description: 'Name of the builder'
+    required: true
+  prefix:
+    description: 'Prefix for the npm package'
+  description:
+    description: 'Description of the npm package'
 
 runs:
   using: node20
