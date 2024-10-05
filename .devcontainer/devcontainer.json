@@ -1,7 +1,7 @@
 {
   "name": "GitHub Actions (TypeScript)",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "yarn install --immutable",
   "customizations": {
     "codespaces": {
       "openFiles": ["README.md"]

@@ -35,15 +35,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-          cache: npm
+          cache: yarn
 
       - name: Install Dependencies
         id: install
-        run: npm ci
+        run: yarn install --immutable
 
       - name: Build dist/ Directory
         id: build
-        run: npm run bundle
+        run: yarn run bundle
 
       # This will fail the workflow if the `dist/` directory is different than
       # expected.
