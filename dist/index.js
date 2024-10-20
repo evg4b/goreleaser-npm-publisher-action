@@ -49133,9 +49133,11 @@ const boolean = (name) => {
 };
 exports.boolean = boolean;
 const stringArray = (name, defaultValue) => {
-    const raw = (0, core_1.getMultilineInput)(name, { trimWhitespace: true });
+    const raw = (0, core_1.getInput)(name, { trimWhitespace: true })
+        ?.split(/[\r\n]/)
+        ?.map(item => item.trim());
     const value = (raw ?? defaultValue ?? []).filter(undefinedIfEmpty);
-    logger_1.logger.debug((0, helpres_1.fmt) `Loading ${name}: ${value}`);
+    logger_1.logger.debug((0, helpres_1.fmt) `Loading ${name}: ${value} (${value.length} lines)`);
     return value;
 };
 exports.stringArray = stringArray;
@@ -49207,7 +49209,7 @@ async function run() {
         clear: (0, inputs_1.boolean)('clear'),
         prefix: (0, inputs_1.string)('prefix'),
         description: (0, inputs_1.string)('description'),
-        files: (0, inputs_1.stringArray)('files', ['readme.md', 'license']),
+        files: (0, inputs_1.stringArray)('files', ['README.md', 'LICENSE']),
         token: (0, inputs_1.string)('token'),
     });
     logger_1.logger.debug('Finished publishing');

@@ -13,7 +13,7 @@ jest.mock('../src/logger', () => ({
   },
 }));
 
-import { getBooleanInput, getInput, getMultilineInput } from '@actions/core';
+import { getBooleanInput, getInput } from '@actions/core';
 import { boolean, string, stringArray } from '../src/inputs';
 
 describe('string', () => {
@@ -66,20 +66,18 @@ describe('stringArray', () => {
     const value = stringArray('files');
 
     expect(value).toEqual([]);
-    expect(getMultilineInput).toHaveBeenCalledWith('files', {
+    expect(getInput).toHaveBeenCalledWith('files', {
       trimWhitespace: true,
     });
   });
 
   it('should return value', () => {
-    jest
-      .mocked(getMultilineInput)
-      .mockReturnValueOnce(['license', 'readme.md']);
+    jest.mocked(getInput).mockReturnValueOnce('license\nreadme.md');
 
     const value = stringArray('files');
 
     expect(value).toEqual(['license', 'readme.md']);
-    expect(getMultilineInput).toHaveBeenCalledWith('files', {
+    expect(getInput).toHaveBeenCalledWith('files', {
       trimWhitespace: true,
     });
   });
@@ -88,7 +86,7 @@ describe('stringArray', () => {
     const value = stringArray('files', ['readme.txt']);
 
     expect(value).toEqual(['readme.txt']);
-    expect(getMultilineInput).toHaveBeenCalledWith('files', {
+    expect(getInput).toHaveBeenCalledWith('files', {
       trimWhitespace: true,
     });
   });

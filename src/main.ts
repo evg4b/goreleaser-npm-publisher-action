@@ -12,7 +12,7 @@ export async function run(): Promise<void> {
     clear: boolean('clear'),
     prefix: string('prefix'),
     description: string('description'),
-    files: stringArray('files', ['readme.md', 'license']),
+    files: stringArray('files', ['README.md', 'LICENSE']),
     token: string('token'),
   });
 

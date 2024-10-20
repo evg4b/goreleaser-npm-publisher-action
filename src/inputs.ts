@@ -1,4 +1,4 @@
-import { getBooleanInput, getInput, getMultilineInput } from '@actions/core';
+import { getBooleanInput, getInput } from '@actions/core';
 import { fmt } from './helpres';
 import { logger } from './logger';
 
@@ -30,10 +30,13 @@ export const stringArray = (
   name: string,
   defaultValue?: string[],
 ): string[] => {
-  const raw = getMultilineInput(name, { trimWhitespace: true });
+  const raw = getInput(name, { trimWhitespace: true })
+    ?.split(/[\r\n]/)
+    ?.map(item => item.trim());
+
   const value = (raw ?? defaultValue ?? []).filter(undefinedIfEmpty);
 
-  logger.debug(fmt`Loading ${name}: ${value}`);
+  logger.debug(fmt`Loading ${name}: ${value} (${value.length} lines)`);
 
   return value;
 };
