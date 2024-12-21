@@ -57,6 +57,10 @@ describe('index', () => {
     expect(stringArray).toHaveBeenCalledWith('files', ['README.md', 'LICENSE']);
   });
 
+  it('should import keywords', () => {
+    expect(stringArray).toHaveBeenCalledWith('keywords', []);
+  });
+
   it('should import token', () => {
     expect(string).toHaveBeenCalledWith('token');
   });
