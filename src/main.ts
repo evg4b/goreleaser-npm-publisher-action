@@ -13,6 +13,7 @@ export async function run(): Promise<void> {
     prefix: string('prefix'),
     description: string('description'),
     files: stringArray('files', ['README.md', 'LICENSE']),
+    keywords: stringArray('keywords', []),
     token: string('token'),
   });
 
