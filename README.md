@@ -57,6 +57,10 @@ steps:
     with:
       token: ${{ secrets.NPM_AUTH_TOKEN }}
       prefix: @evg4b
+      keywords: |-
+        go
+        golang
+        npm
       files: |-
         LICENSE
         README.md
@@ -73,6 +77,7 @@ Also, you can customize the packages with next options:
 | **prefix**      | string   | NPM package scope prefix.                                                                   |
 | **description** | string   | NPM package description.                                                                    |
 | **files**       | string[] | Files that should be included in the NPM package (e.g., `README.md`, `LICENSE` by default). |
+| **keywords**    | string[] | NPM package keywords.                                                                       |
 | **token**       | string   | The NPM authentication token.                                                               |
 
 > [!NOTE]
