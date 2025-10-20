@@ -3195,286 +3195,6 @@ function copyFile(srcFile, destFile, force) {
 
 /***/ }),
 
-/***/ 9380:
-/***/ ((module) => {
-
-"use strict";
-
-module.exports = balanced;
-function balanced(a, b, str) {
-  if (a instanceof RegExp) a = maybeMatch(a, str);
-  if (b instanceof RegExp) b = maybeMatch(b, str);
-
-  var r = range(a, b, str);
-
-  return r && {
-    start: r[0],
-    end: r[1],
-    pre: str.slice(0, r[0]),
-    body: str.slice(r[0] + a.length, r[1]),
-    post: str.slice(r[1] + b.length)
-  };
-}
-
-function maybeMatch(reg, str) {
-  var m = str.match(reg);
-  return m ? m[0] : null;
-}
-
-balanced.range = range;
-function range(a, b, str) {
-  var begs, beg, left, right, result;
-  var ai = str.indexOf(a);
-  var bi = str.indexOf(b, ai + 1);
-  var i = ai;
-
-  if (ai >= 0 && bi > 0) {
-    if(a===b) {
-      return [ai, bi];
-    }
-    begs = [];
-    left = str.length;
-
-    while (i >= 0 && !result) {
-      if (i == ai) {
-        begs.push(i);
-        ai = str.indexOf(a, i + 1);
-      } else if (begs.length == 1) {
-        result = [ begs.pop(), bi ];
-      } else {
-        beg = begs.pop();
-        if (beg < left) {
-          left = beg;
-          right = bi;
-        }
-
-        bi = str.indexOf(b, i + 1);
-      }
-
-      i = ai < bi && ai >= 0 ? ai : bi;
-    }
-
-    if (begs.length) {
-      result = [ left, right ];
-    }
-  }
-
-  return result;
-}
-
-
-/***/ }),
-
-/***/ 4691:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var balanced = __nccwpck_require__(9380);
-
-module.exports = expandTop;
-
-var escSlash = '\0SLASH'+Math.random()+'\0';
-var escOpen = '\0OPEN'+Math.random()+'\0';
-var escClose = '\0CLOSE'+Math.random()+'\0';
-var escComma = '\0COMMA'+Math.random()+'\0';
-var escPeriod = '\0PERIOD'+Math.random()+'\0';
-
-function numeric(str) {
-  return parseInt(str, 10) == str
-    ? parseInt(str, 10)
-    : str.charCodeAt(0);
-}
-
-function escapeBraces(str) {
-  return str.split('\\\\').join(escSlash)
-            .split('\\{').join(escOpen)
-            .split('\\}').join(escClose)
-            .split('\\,').join(escComma)
-            .split('\\.').join(escPeriod);
-}
-
-function unescapeBraces(str) {
-  return str.split(escSlash).join('\\')
-            .split(escOpen).join('{')
-            .split(escClose).join('}')
-            .split(escComma).join(',')
-            .split(escPeriod).join('.');
-}
-
-
-// Basically just str.split(","), but handling cases
-// where we have nested braced sections, which should be
-// treated as individual members, like {a,{b,c},d}
-function parseCommaParts(str) {
-  if (!str)
-    return [''];
-
-  var parts = [];
-  var m = balanced('{', '}', str);
-
-  if (!m)
-    return str.split(',');
-
-  var pre = m.pre;
-  var body = m.body;
-  var post = m.post;
-  var p = pre.split(',');
-
-  p[p.length-1] += '{' + body + '}';
-  var postParts = parseCommaParts(post);
-  if (post.length) {
-    p[p.length-1] += postParts.shift();
-    p.push.apply(p, postParts);
-  }
-
-  parts.push.apply(parts, p);
-
-  return parts;
-}
-
-function expandTop(str) {
-  if (!str)
-    return [];
-
-  // I don't know why Bash 4.3 does this, but it does.
-  // Anything starting with {} will have the first two bytes preserved
-  // but *only* at the top level, so {},a}b will not expand to anything,
-  // but a{},b}c will be expanded to [a}c,abc].
-  // One could argue that this is a bug in Bash, but since the goal of
-  // this module is to match Bash's rules, we escape a leading {}
-  if (str.substr(0, 2) === '{}') {
-    str = '\\{\\}' + str.substr(2);
-  }
-
-  return expand(escapeBraces(str), true).map(unescapeBraces);
-}
-
-function embrace(str) {
-  return '{' + str + '}';
-}
-function isPadded(el) {
-  return /^-?0\d/.test(el);
-}
-
-function lte(i, y) {
-  return i <= y;
-}
-function gte(i, y) {
-  return i >= y;
-}
-
-function expand(str, isTop) {
-  var expansions = [];
-
-  var m = balanced('{', '}', str);
-  if (!m) return [str];
-
-  // no need to expand pre, since it is guaranteed to be free of brace-sets
-  var pre = m.pre;
-  var post = m.post.length
-    ? expand(m.post, false)
-    : [''];
-
-  if (/\$$/.test(m.pre)) {    
-    for (var k = 0; k < post.length; k++) {
-      var expansion = pre+ '{' + m.body + '}' + post[k];
-      expansions.push(expansion);
-    }
-  } else {
-    var isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
-    var isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
-    var isSequence = isNumericSequence || isAlphaSequence;
-    var isOptions = m.body.indexOf(',') >= 0;
-    if (!isSequence && !isOptions) {
-      // {a},b}
-      if (m.post.match(/,.*\}/)) {
-        str = m.pre + '{' + m.body + escClose + m.post;
-        return expand(str);
-      }
-      return [str];
-    }
-
-    var n;
-    if (isSequence) {
-      n = m.body.split(/\.\./);
-    } else {
-      n = parseCommaParts(m.body);
-      if (n.length === 1) {
-        // x{{a,b}}y ==> x{a}y x{b}y
-        n = expand(n[0], false).map(embrace);
-        if (n.length === 1) {
-          return post.map(function(p) {
-            return m.pre + n[0] + p;
-          });
-        }
-      }
-    }
-
-    // at this point, n is the parts, and we know it's not a comma set
-    // with a single entry.
-    var N;
-
-    if (isSequence) {
-      var x = numeric(n[0]);
-      var y = numeric(n[1]);
-      var width = Math.max(n[0].length, n[1].length)
-      var incr = n.length == 3
-        ? Math.abs(numeric(n[2]))
-        : 1;
-      var test = lte;
-      var reverse = y < x;
-      if (reverse) {
-        incr *= -1;
-        test = gte;
-      }
-      var pad = n.some(isPadded);
-
-      N = [];
-
-      for (var i = x; test(i, y); i += incr) {
-        var c;
-        if (isAlphaSequence) {
-          c = String.fromCharCode(i);
-          if (c === '\\')
-            c = '';
-        } else {
-          c = String(i);
-          if (pad) {
-            var need = width - c.length;
-            if (need > 0) {
-              var z = new Array(need + 1).join('0');
-              if (i < 0)
-                c = '-' + z + c.slice(1);
-              else
-                c = z + c;
-            }
-          }
-        }
-        N.push(c);
-      }
-    } else {
-      N = [];
-
-      for (var j = 0; j < n.length; j++) {
-        N.push.apply(N, expand(n[j], false));
-      }
-    }
-
-    for (var j = 0; j < N.length; j++) {
-      for (var k = 0; k < post.length; k++) {
-        var expansion = pre + N[j] + post[k];
-        if (!isTop || isSequence || expansion)
-          expansions.push(expansion);
-      }
-    }
-  }
-
-  return expansions;
-}
-
-
-
-/***/ }),
-
 /***/ 3430:
 /***/ ((module) => {
 
@@ -51138,6 +50858,275 @@ module.exports = parseParams
 
 /***/ }),
 
+/***/ 516:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.range = exports.balanced = void 0;
+const balanced = (a, b, str) => {
+    const ma = a instanceof RegExp ? maybeMatch(a, str) : a;
+    const mb = b instanceof RegExp ? maybeMatch(b, str) : b;
+    const r = ma !== null && mb != null && (0, exports.range)(ma, mb, str);
+    return (r && {
+        start: r[0],
+        end: r[1],
+        pre: str.slice(0, r[0]),
+        body: str.slice(r[0] + ma.length, r[1]),
+        post: str.slice(r[1] + mb.length),
+    });
+};
+exports.balanced = balanced;
+const maybeMatch = (reg, str) => {
+    const m = str.match(reg);
+    return m ? m[0] : null;
+};
+const range = (a, b, str) => {
+    let begs, beg, left, right = undefined, result;
+    let ai = str.indexOf(a);
+    let bi = str.indexOf(b, ai + 1);
+    let i = ai;
+    if (ai >= 0 && bi > 0) {
+        if (a === b) {
+            return [ai, bi];
+        }
+        begs = [];
+        left = str.length;
+        while (i >= 0 && !result) {
+            if (i === ai) {
+                begs.push(i);
+                ai = str.indexOf(a, i + 1);
+            }
+            else if (begs.length === 1) {
+                const r = begs.pop();
+                if (r !== undefined)
+                    result = [r, bi];
+            }
+            else {
+                beg = begs.pop();
+                if (beg !== undefined && beg < left) {
+                    left = beg;
+                    right = bi;
+                }
+                bi = str.indexOf(b, i + 1);
+            }
+            i = ai < bi && ai >= 0 ? ai : bi;
+        }
+        if (begs.length && right !== undefined) {
+            result = [left, right];
+        }
+    }
+    return result;
+};
+exports.range = range;
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 1215:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.expand = expand;
+const balanced_match_1 = __nccwpck_require__(516);
+const escSlash = '\0SLASH' + Math.random() + '\0';
+const escOpen = '\0OPEN' + Math.random() + '\0';
+const escClose = '\0CLOSE' + Math.random() + '\0';
+const escComma = '\0COMMA' + Math.random() + '\0';
+const escPeriod = '\0PERIOD' + Math.random() + '\0';
+const escSlashPattern = new RegExp(escSlash, 'g');
+const escOpenPattern = new RegExp(escOpen, 'g');
+const escClosePattern = new RegExp(escClose, 'g');
+const escCommaPattern = new RegExp(escComma, 'g');
+const escPeriodPattern = new RegExp(escPeriod, 'g');
+const slashPattern = /\\\\/g;
+const openPattern = /\\{/g;
+const closePattern = /\\}/g;
+const commaPattern = /\\,/g;
+const periodPattern = /\\./g;
+function numeric(str) {
+    return !isNaN(str) ? parseInt(str, 10) : str.charCodeAt(0);
+}
+function escapeBraces(str) {
+    return str
+        .replace(slashPattern, escSlash)
+        .replace(openPattern, escOpen)
+        .replace(closePattern, escClose)
+        .replace(commaPattern, escComma)
+        .replace(periodPattern, escPeriod);
+}
+function unescapeBraces(str) {
+    return str
+        .replace(escSlashPattern, '\\')
+        .replace(escOpenPattern, '{')
+        .replace(escClosePattern, '}')
+        .replace(escCommaPattern, ',')
+        .replace(escPeriodPattern, '.');
+}
+/**
+ * Basically just str.split(","), but handling cases
+ * where we have nested braced sections, which should be
+ * treated as individual members, like {a,{b,c},d}
+ */
+function parseCommaParts(str) {
+    if (!str) {
+        return [''];
+    }
+    const parts = [];
+    const m = (0, balanced_match_1.balanced)('{', '}', str);
+    if (!m) {
+        return str.split(',');
+    }
+    const { pre, body, post } = m;
+    const p = pre.split(',');
+    p[p.length - 1] += '{' + body + '}';
+    const postParts = parseCommaParts(post);
+    if (post.length) {
+        ;
+        p[p.length - 1] += postParts.shift();
+        p.push.apply(p, postParts);
+    }
+    parts.push.apply(parts, p);
+    return parts;
+}
+function expand(str) {
+    if (!str) {
+        return [];
+    }
+    // I don't know why Bash 4.3 does this, but it does.
+    // Anything starting with {} will have the first two bytes preserved
+    // but *only* at the top level, so {},a}b will not expand to anything,
+    // but a{},b}c will be expanded to [a}c,abc].
+    // One could argue that this is a bug in Bash, but since the goal of
+    // this module is to match Bash's rules, we escape a leading {}
+    if (str.slice(0, 2) === '{}') {
+        str = '\\{\\}' + str.slice(2);
+    }
+    return expand_(escapeBraces(str), true).map(unescapeBraces);
+}
+function embrace(str) {
+    return '{' + str + '}';
+}
+function isPadded(el) {
+    return /^-?0\d/.test(el);
+}
+function lte(i, y) {
+    return i <= y;
+}
+function gte(i, y) {
+    return i >= y;
+}
+function expand_(str, isTop) {
+    /** @type {string[]} */
+    const expansions = [];
+    const m = (0, balanced_match_1.balanced)('{', '}', str);
+    if (!m)
+        return [str];
+    // no need to expand pre, since it is guaranteed to be free of brace-sets
+    const pre = m.pre;
+    const post = m.post.length ? expand_(m.post, false) : [''];
+    if (/\$$/.test(m.pre)) {
+        for (let k = 0; k < post.length; k++) {
+            const expansion = pre + '{' + m.body + '}' + post[k];
+            expansions.push(expansion);
+        }
+    }
+    else {
+        const isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
+        const isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
+        const isSequence = isNumericSequence || isAlphaSequence;
+        const isOptions = m.body.indexOf(',') >= 0;
+        if (!isSequence && !isOptions) {
+            // {a},b}
+            if (m.post.match(/,(?!,).*\}/)) {
+                str = m.pre + '{' + m.body + escClose + m.post;
+                return expand_(str);
+            }
+            return [str];
+        }
+        let n;
+        if (isSequence) {
+            n = m.body.split(/\.\./);
+        }
+        else {
+            n = parseCommaParts(m.body);
+            if (n.length === 1 && n[0] !== undefined) {
+                // x{{a,b}}y ==> x{a}y x{b}y
+                n = expand_(n[0], false).map(embrace);
+                //XXX is this necessary? Can't seem to hit it in tests.
+                /* c8 ignore start */
+                if (n.length === 1) {
+                    return post.map(p => m.pre + n[0] + p);
+                }
+                /* c8 ignore stop */
+            }
+        }
+        // at this point, n is the parts, and we know it's not a comma set
+        // with a single entry.
+        let N;
+        if (isSequence && n[0] !== undefined && n[1] !== undefined) {
+            const x = numeric(n[0]);
+            const y = numeric(n[1]);
+            const width = Math.max(n[0].length, n[1].length);
+            let incr = n.length === 3 && n[2] !== undefined ? Math.abs(numeric(n[2])) : 1;
+            let test = lte;
+            const reverse = y < x;
+            if (reverse) {
+                incr *= -1;
+                test = gte;
+            }
+            const pad = n.some(isPadded);
+            N = [];
+            for (let i = x; test(i, y); i += incr) {
+                let c;
+                if (isAlphaSequence) {
+                    c = String.fromCharCode(i);
+                    if (c === '\\') {
+                        c = '';
+                    }
+                }
+                else {
+                    c = String(i);
+                    if (pad) {
+                        const need = width - c.length;
+                        if (need > 0) {
+                            const z = new Array(need + 1).join('0');
+                            if (i < 0) {
+                                c = '-' + z + c.slice(1);
+                            }
+                            else {
+                                c = z + c;
+                            }
+                        }
+                    }
+                }
+                N.push(c);
+            }
+        }
+        else {
+            N = [];
+            for (let j = 0; j < n.length; j++) {
+                N.push.apply(N, expand_(n[j], false));
+            }
+        }
+        for (let j = 0; j < N.length; j++) {
+            for (let k = 0; k < post.length; k++) {
+                const expansion = pre + N[j] + post[k];
+                if (!isTop || isSequence || expansion) {
+                    expansions.push(expansion);
+                }
+            }
+        }
+    }
+    return expansions;
+}
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
 /***/ 4352:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -55712,16 +55701,13 @@ exports.escape = escape;
 /***/ }),
 
 /***/ 2329:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.unescape = exports.escape = exports.AST = exports.Minimatch = exports.match = exports.makeRe = exports.braceExpand = exports.defaults = exports.filter = exports.GLOBSTAR = exports.sep = exports.minimatch = void 0;
-const brace_expansion_1 = __importDefault(__nccwpck_require__(4691));
+const brace_expansion_1 = __nccwpck_require__(1215);
 const assert_valid_pattern_js_1 = __nccwpck_require__(3783);
 const ast_js_1 = __nccwpck_require__(8529);
 const escape_js_1 = __nccwpck_require__(382);
@@ -55874,7 +55860,7 @@ const braceExpand = (pattern, options = {}) => {
         // shortcut. no need to expand.
         return [pattern];
     }
-    return (0, brace_expansion_1.default)(pattern);
+    return (0, brace_expansion_1.expand)(pattern);
 };
 exports.braceExpand = braceExpand;
 exports.minimatch.braceExpand = exports.braceExpand;
@@ -59828,19 +59814,19 @@ exports.Minipass = Minipass;
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
-var lodash=__nccwpck_require__(2356),path=__nccwpck_require__(6928),ajv=__nccwpck_require__(2965),promises=__nccwpck_require__(1943),picocolors=__nccwpck_require__(6642),glob=__nccwpck_require__(3529),process=__nccwpck_require__(932),child_process=__nccwpck_require__(5317),os=__nccwpck_require__(857);var V=t=>{throw TypeError(t)};var xt=(t,r,o)=>r.has(t)||V("Cannot "+o);var G=(t,r,o)=>(xt(t,r,"read from private field"),o?o.call(t):r.get(t)),W=(t,r,o)=>r.has(t)?V("Cannot add the same private member more than once"):r instanceof WeakSet?r.add(t):r.set(t,o);var l=class{constructor(r,o){this.output=r;this.verbose=o;}async group(r,o){this.output.group(r);try{return await o()}finally{this.output.groupEnd();}}info(r){this.output.log(r);}warning(r){this.output.warn(picocolors.yellow(r.toString()));}error(r){this.output.error(r);}debug(r){this.verbose&&this.output.debug(r);}};var e=new l(console,!1),Y=t=>{e=t;};var d=t=>r=>(t(r),r);var y=(t,r)=>promises.writeFile(t,r,"utf-8").then(d(()=>e.debug(`File ${t} written`))).catch(d(()=>e.error(`Error while writing file ${t}`))),L=(t,r)=>promises.copyFile(t,r).then(d(()=>e.debug(`Copied file ${t} to ${r}`))).catch(d(()=>e.error(`Error while writing file ${t}`))),B=t=>promises.mkdir(t,{recursive:!0}).then(()=>e.debug(`Created directory ${t}`)).catch(d(()=>e.error(`Error while writing file ${t}`))),k=t=>promises.readFile(t,"utf8").then(d(()=>e.debug(`Read file ${t}`))).catch(d(()=>e.error(`Error while reading file ${t}`))),K=(t,r)=>promises.rm(t,r).then(d(()=>e.debug(`Removed ${t}`))).catch(d(()=>e.error(`Error while removing ${t}`)));var h=class extends Error{constructor(r){let o=r??[{message:"Unknown error"}];super(o.map(i=>i.message).join(`
-`));}};var Q=new ajv.Ajv().compile({type:"object",properties:{project_name:{type:"string"},tag:{type:"string"},previous_tag:{type:"string"},version:{type:"string"},commit:{type:"string"},date:{type:"string"},runtime:{type:"object",properties:{goos:{type:"string"},goarch:{type:"string"}},required:["goarch","goos"]}},required:["commit","date","previous_tag","project_name","runtime","tag","version"]}),j=async t=>{let r=JSON.parse(await k(t));if(Q(r))return r;throw new h(Q.errors)};var Z=new ajv.Ajv,X=Z.compile({items:{type:"object",additionalProperties:!0,properties:{name:{type:"string"},path:{type:"string"},internal_type:{type:"integer"},type:{type:"string"},goos:{type:"string"},goarch:{type:"string"},extra:{type:"object"},goamd64:{type:"string"}},required:["internal_type","name","path","type"]},type:"array"}),N=Z.compile({items:{type:"object",additionalProperties:!0,properties:{name:{type:"string"},path:{type:"string"},internal_type:{const:4},type:{type:"string"},goos:{type:"string"},goarch:{type:"string"},extra:{type:"object",additionalProperties:!0,properties:{Binary:{type:"string"},Builder:{type:"string"},Ext:{type:"string"},ID:{type:"string"}},required:["Binary","Ext","ID"]},goamd64:{type:"string"}},required:["internal_type","name","path","type","extra"]},type:"array"}),v=async t=>{let r=JSON.parse(await k(t));if(X(r))return r;throw new h(X.errors)};var M=async(t,r)=>{await y(t,JSON.stringify(r,null,2));};var u=class{projectPath;constructor(r){this.projectPath=path.resolve(process.cwd(),r);}get artifactsPath(){return path.join(this.projectPath,"dist","artifacts.json")}get metadataPath(){return path.join(this.projectPath,"dist","metadata.json")}get distPath(){return path.join(this.projectPath,"dist","npm")}project(...r){return path.join(this.projectPath,...r)}packageFolder(...[r,...o]){return path.join(this.distPath,lodash.kebabCase(r),...o)}packageJson(r){return path.join(this.projectPath,"dist","npm",lodash.kebabCase(r),"package.json")}};var E=t=>r=>r.type==="Binary"&&r.extra.ID===t;var R=(t,r)=>{if(!(t!=null&&t.length))throw new Error(r??"Value should not be empty")};var rt=(t,r)=>glob.glob(r,{cwd:t,nocase:!0,ignore:["node_modules/**","dist/"]}).then(d(o=>{e.debug("Lookup files by globs"),r.forEach(i=>e.debug(i)),e.debug(`In folder ${t}`),e.debug("Founded:"),o.forEach(i=>e.debug(i));}));var F,I=class I extends String{constructor(){super(...arguments);W(this,F,!0);}static isCode(o){return o instanceof I&&G(o,F)}};F=new WeakMap;var w=I;var St=t=>{let r=t.getFullYear(),o=t.getMonth(),i=t.getDate(),n=t.getHours(),s=t.getMinutes(),a=t.getSeconds(),c=t.getMilliseconds();return `new Date(${r}, ${o}, ${i}, ${n}, ${s}, ${a}, ${c})`},Tt=t=>{let r=Object.entries(t).map(([o,i])=>`${o}: ${_(i)}`);return lodash.isEmpty(t)?"{}":`{ ${r.join(", ")} }`},Dt=t=>lodash.isEmpty(t)?"[]":`[ ${t.map(_).join(", ")} ]`,_=t=>{switch(!0){case w.isCode(t):return t.toString();case typeof t=="string":return `'${t}'`;case typeof t=="number":return t.toString();case typeof t=="boolean":return t.toString();case t===null:return "null";case t===void 0:return "undefined";case t instanceof Date:return St(t);case typeof t=="symbol":return `Symbol('${t.description}')`;case Array.isArray(t):return Dt(t);case(typeof t=="object"&&(t==null?void 0:t.constructor.name)==="Object"):return Tt(t)}throw new Error(`Unsupported type: ${typeof t}`)};var ot=(t,...r)=>{let o=t.reduce((i,n,s)=>i+_(r[s-1])+n);return new w(o)};var A=ot;var Jt={amd64:"x64",386:"ia32",arm:"arm",arm64:"arm64",s390x:"s390x",s390:"s390",riscv64:"riscv64",ppc64:"ppc64",ppc:"ppc",mips:"mips"},it=t=>{let r=Jt[t];if(!r)throw new Error(`${t} is not supported`);return r};var Lt={darwin:"darwin",linux:"linux",windows:"win32",android:"android",aix:"aix",freebsd:"freebsd",openbsd:"openbsd",solaris:"sunos",netbsd:"netbsd"},nt=t=>{let r=Lt[t];if(!r)throw new Error(`${t} is not supported`);return r};var C=(t,r,o,i)=>({name:`${r.project_name}_${t.goos}_${t.goarch}`,version:r.version,os:nt(t.goos),cpu:it(t.goarch),bin:`${t.extra.Binary}${t.extra.Ext}`,sourceBinary:t.path,destinationBinary:t.path,files:o,keywords:i}),O=(t,r,o,i,n)=>ct({name:H(t,o),description:r,version:t.version,bin:{[t.name]:t.bin},os:[t.os],cpu:[t.cpu],files:i,keywords:n}),H=(t,r)=>"project_name"in t?lodash.isEmpty(r)?t.project_name:`${r}/${t.project_name}`:lodash.isEmpty(r)?t.name:`${r}/${t.name}`,S=(t,r,o,i,n,s)=>ct({name:H(r,i),description:o,version:r.version,bin:{[r.project_name]:"index.js"},optionalDependencies:t.reduce((a,c)=>({...a,[H(c,i)]:r.version}),{}),os:lodash.uniq(t.map(a=>a.os)),cpu:lodash.uniq(t.map(a=>a.cpu)),files:n,keywords:s}),ct=({description:t,...r})=>t?{...r,description:t}:r;var pt=async(t,r,o)=>{for(let i of o){let n=t.project(i),s=t.packageFolder(r,i);await L(n,s);}},T=async t=>{var f;let r=new u(t.project);e.debug(`Start build package in ${r.project()}`);let o=await v(r.artifactsPath);R(o,"Couldn\u2019t find any artifacts."),e.debug(`Found ${o.length} artifact(s)`),t.verbose&&o.forEach(m=>e.debug(`${m.name}: ${m.path}`));let i=await j(r.metadataPath);t.verbose&&await e.group("Loaded metadata:",()=>(e.debug(`project_name: ${i.project_name}`),e.debug(`tag: ${i.tag}`),e.debug(`previous_tag: ${i.previous_tag}`),e.debug(`version: ${i.version}`),e.debug(`commit: ${i.commit}`),e.debug(`date: ${i.date}`),e.debug(`runtime_goos: ${i.runtime.goos}`),e.debug(`runtime_goarch: ${i.runtime.goarch}`),Promise.resolve()));let n=[],s=t.builder??i.project_name,a=o.filter(E(s));if(R(a,`Couldn\u2019t find any binary artifacts from ${s} builder`),!N(a))throw e.error("Invalid binary artifacts"),(f=N.errors)==null||f.forEach(m=>{e.error(JSON.stringify(m,null,2));}),await e.group("artifacts:",()=>(e.error(JSON.stringify(a,null,2)),Promise.resolve())),new Error("Invalid binary artifacts");e.debug(`Found ${a.length} artifact(s)`);let c=await rt(t.project,t.files);if(t.verbose){e.debug(`Found ${c.length} files:`);for(let m of c)e.debug(`${m}: ${m}`);}let p=t.keywords??[];for(let m of a){let[,P]=m.path.split(path.sep);await e.group(`Built package ${P}`,async()=>{let yt=path.join(t.project,m.path),{base:ht}=path.parse(m.path),J=r.packageFolder(P);await B(J),e.debug(`Created package path: ${J}`);let bt=path.join(J,ht),$=C(m,i,c,p);e.debug(`Created package ${$.name}: ${$.destinationBinary}`),n.push($),await L(yt,bt);let wt=O($,t.description,t.prefix,c,p),U=r.packageJson(P);await M(U,wt),e.debug(`Written package json file: ${U}`),await pt(r,P,c),e.debug(`Copied ${c.length} extra file(s)`);});}e.debug(`Built ${n.length} platform package(s)`);let g=S(n,i,t.description,t.prefix,c,p);await B(r.packageFolder(i.project_name)),e.debug(`Created package path: ${r.packageFolder(i.project_name)}`),await M(r.packageJson(i.project_name),g),e.debug(`Written package json file: ${r.packageJson(i.project_name)}`);let x=path.join(r.packageFolder(i.project_name),"index.js");await y(x,It(n,t.prefix)),e.debug(`Written package index.js file: ${x}`),await pt(r,i.project_name,c),e.debug(`Copied ${c.length} extra file(s)`);},Rt=(t,r)=>t?[r]:[],It=(t,r)=>{let o=t.reduce((s,a)=>({...s,[`${a.os}_${a.cpu}`]:[...Rt(!!r,r),a.name,a.bin]}),{}),i=lodash.isEmpty(r)?A`path.dirname(__dirname)`:A`path.dirname(path.dirname(__dirname))`;return A`#!/usr/bin/env node
+var lodash=__nccwpck_require__(2356),path=__nccwpck_require__(6928),ajv=__nccwpck_require__(2965),promises=__nccwpck_require__(1943),picocolors=__nccwpck_require__(6642),glob=__nccwpck_require__(3529),process=__nccwpck_require__(932),child_process=__nccwpck_require__(5317),os=__nccwpck_require__(857);var U=t=>{throw TypeError(t)};var xt=(t,r,o)=>r.has(t)||U("Cannot "+o);var V=(t,r,o)=>(xt(t,r,"read from private field"),r.get(t)),G=(t,r,o)=>r.has(t)?U("Cannot add the same private member more than once"):r instanceof WeakSet?r.add(t):r.set(t,o);var l=class{constructor(r,o){this.output=r;this.verbose=o;}async group(r,o){this.output.group(r);try{return await o()}finally{this.output.groupEnd();}}info(r){this.output.log(r);}warning(r){this.output.warn(picocolors.yellow(r.toString()));}error(r){this.output.error(r);}debug(r){this.verbose&&this.output.debug(r);}};var e=new l(console,false),W=t=>{e=t;};var d=t=>r=>(t(r),r);var y=(t,r)=>promises.writeFile(t,r,"utf-8").then(d(()=>e.debug(`File ${t} written`))).catch(d(()=>e.error(`Error while writing file ${t}`))),D=(t,r)=>promises.copyFile(t,r).then(d(()=>e.debug(`Copied file ${t} to ${r}`))).catch(d(()=>e.error(`Error while writing file ${t}`))),L=t=>promises.mkdir(t,{recursive:true}).then(()=>e.debug(`Created directory ${t}`)).catch(d(()=>e.error(`Error while writing file ${t}`))),$=t=>promises.readFile(t,"utf8").then(d(()=>e.debug(`Read file ${t}`))).catch(d(()=>e.error(`Error while reading file ${t}`))),Y=(t,r)=>promises.rm(t,r).then(d(()=>e.debug(`Removed ${t}`))).catch(d(()=>e.error(`Error while removing ${t}`)));var h=class extends Error{constructor(r){let o=r??[{message:"Unknown error"}];super(o.map(i=>i.message).join(`
+`));}};var K=new ajv.Ajv().compile({type:"object",properties:{project_name:{type:"string"},tag:{type:"string"},previous_tag:{type:"string"},version:{type:"string"},commit:{type:"string"},date:{type:"string"},runtime:{type:"object",properties:{goos:{type:"string"},goarch:{type:"string"}},required:["goarch","goos"]}},required:["commit","date","previous_tag","project_name","runtime","tag","version"]}),j=async t=>{let r=JSON.parse(await $(t));if(K(r))return r;throw new h(K.errors)};var X=new ajv.Ajv,Q=X.compile({items:{type:"object",additionalProperties:true,properties:{name:{type:"string"},path:{type:"string"},internal_type:{type:"integer"},type:{type:"string"},goos:{type:"string"},goarch:{type:"string"},extra:{type:"object"},goamd64:{type:"string"}},required:["internal_type","name","path","type"]},type:"array"}),B=X.compile({items:{type:"object",additionalProperties:true,properties:{name:{type:"string"},path:{type:"string"},internal_type:{const:4},type:{type:"string"},goos:{type:"string"},goarch:{type:"string"},extra:{type:"object",additionalProperties:true,properties:{Binary:{type:"string"},Builder:{type:"string"},Ext:{type:"string"},ID:{type:"string"}},required:["Binary","Ext","ID"]},goamd64:{type:"string"}},required:["internal_type","name","path","type","extra"]},type:"array"}),v=async t=>{let r=JSON.parse(await $(t));if(Q(r))return r;throw new h(Q.errors)};var N=async(t,r)=>{await y(t,JSON.stringify(r,null,2));};var u=class{projectPath;constructor(r){this.projectPath=path.resolve(process.cwd(),r);}get artifactsPath(){return path.join(this.projectPath,"dist","artifacts.json")}get metadataPath(){return path.join(this.projectPath,"dist","metadata.json")}get distPath(){return path.join(this.projectPath,"dist","npm")}project(...r){return path.join(this.projectPath,...r)}packageFolder(...[r,...o]){return path.join(this.distPath,lodash.kebabCase(r),...o)}packageJson(r){return path.join(this.projectPath,"dist","npm",lodash.kebabCase(r),"package.json")}};var E=t=>r=>r.type==="Binary"&&r.extra.ID===t;var M=(t,r)=>{if(!(t!=null&&t.length))throw new Error(r??"Value should not be empty")};var tt=(t,r)=>glob.glob(r,{cwd:t,nocase:true,ignore:["node_modules/**","dist/"]}).then(d(o=>{e.debug("Lookup files by globs"),r.forEach(i=>e.debug(i)),e.debug(`In folder ${t}`),e.debug("Founded:"),o.forEach(i=>e.debug(i));}));var F,R=class R extends String{constructor(){super(...arguments);G(this,F,true);}static isCode(o){return o instanceof R&&V(o,F)}};F=new WeakMap;var w=R;var St=t=>{let r=t.getFullYear(),o=t.getMonth(),i=t.getDate(),n=t.getHours(),a=t.getMinutes(),s=t.getSeconds(),c=t.getMilliseconds();return `new Date(${r}, ${o}, ${i}, ${n}, ${a}, ${s}, ${c})`},Tt=t=>{let r=Object.entries(t).map(([o,i])=>`${o}: ${_(i)}`);return lodash.isEmpty(t)?"{}":`{ ${r.join(", ")} }`},Jt=t=>lodash.isEmpty(t)?"[]":`[ ${t.map(_).join(", ")} ]`,_=t=>{switch(true){case w.isCode(t):return t.toString();case typeof t=="string":return `'${t}'`;case typeof t=="number":return t.toString();case typeof t=="boolean":return t.toString();case t===null:return "null";case t===void 0:return "undefined";case t instanceof Date:return St(t);case typeof t=="symbol":return `Symbol('${t.description}')`;case Array.isArray(t):return Jt(t);case(typeof t=="object"&&(t==null?void 0:t.constructor.name)==="Object"):return Tt(t)}throw new Error(`Unsupported type: ${typeof t}`)};var et=(t,...r)=>{let o=t.reduce((i,n,a)=>i+_(r[a-1])+n);return new w(o)};var ot=et;var Dt={amd64:"x64",386:"ia32",arm:"arm",arm64:"arm64",s390x:"s390x",s390:"s390",riscv64:"riscv64",ppc64:"ppc64",ppc:"ppc",mips:"mips"},it=t=>{let r=Dt[t];if(!r)throw new Error(`${t} is not supported`);return r};var Lt={darwin:"darwin",linux:"linux",windows:"win32",android:"android",aix:"aix",freebsd:"freebsd",openbsd:"openbsd",solaris:"sunos",netbsd:"netbsd"},nt=t=>{let r=Lt[t];if(!r)throw new Error(`${t} is not supported`);return r};var A=(t,r,o,i)=>({name:`${r.project_name}_${t.goos}_${t.goarch}`,version:r.version,os:nt(t.goos),cpu:it(t.goarch),bin:`${t.extra.Binary}${t.extra.Ext}`,sourceBinary:t.path,destinationBinary:t.path,files:o,keywords:i}),C=(t,r,o,i,n)=>ct({name:I(t,o),description:r,version:t.version,bin:{[t.name]:t.bin},os:[t.os],cpu:[t.cpu],files:i,keywords:n}),I=(t,r)=>"project_name"in t?lodash.isEmpty(r)?t.project_name:`${r}/${t.project_name}`:lodash.isEmpty(r)?t.name:`${r}/${t.name}`,O=(t,r,o,i,n,a)=>ct({name:I(r,i),description:o,version:r.version,bin:{[r.project_name]:"index.js"},optionalDependencies:t.reduce((s,c)=>({...s,[I(c,i)]:r.version}),{}),os:lodash.uniq(t.map(s=>s.os)),cpu:lodash.uniq(t.map(s=>s.cpu)),files:n,keywords:a}),ct=({description:t,...r})=>t?{...r,description:t}:r;var pt=async(t,r,o)=>{for(let i of o){let n=t.project(i),a=t.packageFolder(r,i);await D(n,a);}},S=async t=>{var f;let r=new u(t.project);e.debug(`Start build package in ${r.project()}`);let o=await v(r.artifactsPath);M(o,"Couldn\u2019t find any artifacts."),e.debug(`Found ${o.length} artifact(s)`),t.verbose&&o.forEach(m=>e.debug(`${m.name}: ${m.path}`));let i=await j(r.metadataPath);t.verbose&&await e.group("Loaded metadata:",()=>(e.debug(`project_name: ${i.project_name}`),e.debug(`tag: ${i.tag}`),e.debug(`previous_tag: ${i.previous_tag}`),e.debug(`version: ${i.version}`),e.debug(`commit: ${i.commit}`),e.debug(`date: ${i.date}`),e.debug(`runtime_goos: ${i.runtime.goos}`),e.debug(`runtime_goarch: ${i.runtime.goarch}`),Promise.resolve()));let n=[],a=t.builder??i.project_name,s=o.filter(E(a));if(M(s,`Couldn\u2019t find any binary artifacts from ${a} builder`),!B(s))throw e.error("Invalid binary artifacts"),(f=B.errors)==null||f.forEach(m=>{e.error(JSON.stringify(m,null,2));}),await e.group("artifacts:",()=>(e.error(JSON.stringify(s,null,2)),Promise.resolve())),new Error("Invalid binary artifacts");e.debug(`Found ${s.length} artifact(s)`);let c=await tt(t.project,t.files);if(t.verbose){e.debug(`Found ${c.length} files:`);for(let m of c)e.debug(`${m}: ${m}`);}let p=t.keywords??[];for(let m of s){let[,P]=m.path.split(path.sep);await e.group(`Built package ${P}`,async()=>{let yt=path.join(t.project,m.path),{base:ht}=path.parse(m.path),J=r.packageFolder(P);await L(J),e.debug(`Created package path: ${J}`);let bt=path.join(J,ht),k=A(m,i,c,p);e.debug(`Created package ${k.name}: ${k.destinationBinary}`),n.push(k),await D(yt,bt);let wt=C(k,t.description,t.prefix,c,p),q=r.packageJson(P);await N(q,wt),e.debug(`Written package json file: ${q}`),await pt(r,P,c),e.debug(`Copied ${c.length} extra file(s)`);});}e.debug(`Built ${n.length} platform package(s)`);let g=O(n,i,t.description,t.prefix,c,p);await L(r.packageFolder(i.project_name)),e.debug(`Created package path: ${r.packageFolder(i.project_name)}`),await N(r.packageJson(i.project_name),g),e.debug(`Written package json file: ${r.packageJson(i.project_name)}`);let x=path.join(r.packageFolder(i.project_name),"index.js");await y(x,It(n,t.prefix)),e.debug(`Written package index.js file: ${x}`),await pt(r,i.project_name,c),e.debug(`Copied ${c.length} extra file(s)`);},Rt=(t,r)=>t?[r]:[],It=(t,r)=>{let o=lodash.fromPairs(t.map(n=>[`${n.os}_${n.cpu}`,{name:[...Rt(!!r,r),n.name],bin:n.bin}]));return ot`#!/usr/bin/env node
 const path = require('path');
 const child_process = require('child_process');
 const mapping = ${o};
-const modulesDirectory = ${i};
 const definition = mapping[process.platform + '_' + process.arch];
-const packagePath = path.join(modulesDirectory, ...definition);
+const packageJsonPath = require.resolve(definition.name.join('/') + '/package.json');
+const packagePath = path.join(path.dirname(packageJsonPath), definition.bin);
 child_process.spawn(packagePath, process.argv.splice(2), {
   stdio: 'inherit',
   env: process.env,
-});`.toString()};var mt=async(t,r,o)=>{await e.group(`${r.name}@${r.version}`,()=>{if(r.description&&e.info(`description: ${r.description}`),r.keywords.length&&e.info(`keywords: ${r.keywords.join(", ")}`),e.info(`version: ${r.version}`),e.info(`os: ${r.os.join(", ")}`),e.info(`cpu: ${r.cpu.join(", ")}`),o&&e.info(`bin: ${t.packageFolder(o.sourceBinary)}`),r.optionalDependencies){e.debug("  optionalDependencies:");for(let[i,n]of Object.entries(r.optionalDependencies))e.debug(`    ${i}@${n}`);}return Promise.resolve()});},dt=async t=>{let r=new u(t.project),o=await j(r.metadataPath),i=await v(r.artifactsPath),n=t.builder??o.project_name,s=t.keywords??[],a=i.filter(E(n)).map(p=>{let g=C(p,o,[],s);return {definition:g,json:O(g,t.description,t.prefix,[],s)}}),c=S(a.map(({definition:p})=>p),o,t.description,t.prefix,[],s);await e.group("Main package:",()=>mt(r,c)),e.info(""),await e.group("Platform packages:",async()=>{for(let{definition:p,json:g}of a)e.debug(""),await mt(r,g,p);});};var ft=async(t,r)=>{if(!t.token)return e.debug("No token provided"),await r({...process.env});e.debug(`Founded token: *****[len:${t.token.length}]`);let o=path.resolve(t.pwd??process.cwd(),".npmrc");try{return await y(o,Ut(t.token).join(os.EOL)),await r({...process.env,NPM_TOKEN:t.token})}finally{await K(o,{force:!0});}},Ut=t=>["; THIS_FILE_WAS_GENERATED_BY GORELEASER_NPM_PUBLISHER","; PLEASE_DO_NOT_TOUCH_IT!",`//registry.npmjs.org/:_authToken=${t}`];var D=class extends Error{code;summary;detail;constructor(r){super(`[${r.code}]: ${r.summary}`),this.summary=r.summary,this.detail=r.detail,this.code=r.code;}};var q=async(t,r)=>{let o=os.platform()==="win32",i=o?"npm.cmd":"npm";return ft(r??{},s=>new Promise((a,c)=>{let p=child_process.spawn(i,["--json",...t],{cwd:(r==null?void 0:r.pwd)??process.cwd(),env:s,shell:o}),g="",x="";p.stdout.on("data",f=>g+=f),p.stderr.on("data",f=>x+=f),p.on("close",f=>{if(f){let m=JSON.parse(g);c(new D(m.error));}a(JSON.parse(g));}),p.on("error",f=>c(f));}))};var ut=async(t,r)=>q(["publish","--access","public"],{pwd:t,token:r==null?void 0:r.token});var lt=async t=>{await T(t);let r=new u(t.project),o=lodash.sortBy(await promises.readdir(r.distPath),i=>-i.length);for(let i of o){e.info(r.packageFolder(i));let n=await ut(r.packageFolder(i),{token:t.token});await e.group(`Successfully published ${n.id}`,async()=>{e.info(`Name: ${n.name}`),e.info(`Version: ${n.version}`),e.info(`Size: ${n.size}`),e.info(`Unpacked size: ${n.unpackedSize}`),e.info(`SHA sum: ${n.shasum}`),e.info(`Integrity: ${n.integrity}`);for(let s of n.files)await e.group(`Filename: ${s.path}`,()=>(e.info(`Size: ${s.size}`),e.info(`Mode: ${s.mode}`),Promise.resolve()));e.info(`Entry count: ${n.entryCount}`);});}};var bo=lt,wo=dt,xo=T;
-exports.ConsoleLogger=l;exports.build=xo;exports.list=wo;exports.publish=bo;exports.setLogger=Y;
+});`.toString()};var mt=async(t,r,o)=>{await e.group(`${r.name}@${r.version}`,()=>{if(r.description&&e.info(`description: ${r.description}`),r.keywords.length&&e.info(`keywords: ${r.keywords.join(", ")}`),e.info(`version: ${r.version}`),e.info(`os: ${r.os.join(", ")}`),e.info(`cpu: ${r.cpu.join(", ")}`),o&&e.info(`bin: ${t.packageFolder(o.sourceBinary)}`),r.optionalDependencies){e.debug("  optionalDependencies:");for(let[i,n]of Object.entries(r.optionalDependencies))e.debug(`    ${i}@${n}`);}return Promise.resolve()});},dt=async t=>{let r=new u(t.project),o=await j(r.metadataPath),i=await v(r.artifactsPath),n=t.builder??o.project_name,a=t.keywords??[],s=i.filter(E(n)).map(p=>{let g=A(p,o,[],a);return {definition:g,json:C(g,t.description,t.prefix,[],a)}}),c=O(s.map(({definition:p})=>p),o,t.description,t.prefix,[],a);await e.group("Main package:",()=>mt(r,c)),e.info(""),await e.group("Platform packages:",async()=>{for(let{definition:p,json:g}of s)e.debug(""),await mt(r,g,p);});};var ft=async(t,r)=>{if(!t.token)return e.debug("No token provided"),await r({...process.env});e.debug(`Founded token: *****[len:${t.token.length}]`);let o=path.resolve(t.pwd??process.cwd(),".npmrc");try{return await y(o,Ut(t.token).join(os.EOL)),await r({...process.env,NPM_TOKEN:t.token})}finally{await Y(o,{force:true});}},Ut=t=>["; THIS_FILE_WAS_GENERATED_BY GORELEASER_NPM_PUBLISHER","; PLEASE_DO_NOT_TOUCH_IT!",`//registry.npmjs.org/:_authToken=${t}`];var T=class extends Error{code;summary;detail;constructor(r){super(`[${r.code}]: ${r.summary}`),this.summary=r.summary,this.detail=r.detail,this.code=r.code;}};var z=async(t,r)=>{let o=os.platform()==="win32",i=o?"npm.cmd":"npm";return ft(r??{},a=>new Promise((s,c)=>{let p=child_process.spawn(i,["--json",...t],{cwd:(r==null?void 0:r.pwd)??process.cwd(),env:a,shell:o}),g="",x="";p.stdout.on("data",f=>g+=f),p.stderr.on("data",f=>x+=f),p.on("close",f=>{if(f){let m=JSON.parse(g);c(new T(m.error));}s(JSON.parse(g));}),p.on("error",f=>c(f));}))};var ut=async(t,r)=>z(["publish","--access","public"],{pwd:t,token:r==null?void 0:r.token});var lt=async t=>{await S(t);let r=new u(t.project),o=lodash.sortBy(await promises.readdir(r.distPath),i=>-i.length);for(let i of o){e.info(r.packageFolder(i));let n=await ut(r.packageFolder(i),{token:t.token});await e.group(`Successfully published ${n.id}`,async()=>{e.info(`Name: ${n.name}`),e.info(`Version: ${n.version}`),e.info(`Size: ${n.size}`),e.info(`Unpacked size: ${n.unpackedSize}`),e.info(`SHA sum: ${n.shasum}`),e.info(`Integrity: ${n.integrity}`);for(let a of n.files)await e.group(`Filename: ${a.path}`,()=>(e.info(`Size: ${a.size}`),e.info(`Mode: ${a.mode}`),Promise.resolve()));e.info(`Entry count: ${n.entryCount}`);});}};var bo=lt,wo=dt,xo=S;
+exports.ConsoleLogger=l;exports.build=xo;exports.list=wo;exports.publish=bo;exports.setLogger=W;
 
 /***/ }),
 
