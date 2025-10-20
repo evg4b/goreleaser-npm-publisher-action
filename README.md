@@ -53,7 +53,7 @@ steps:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   - name: Build and publish NPM packages
-    uses: evg4b/goreleaser-npm-publisher-action@v1.0.0
+    uses: evg4b/goreleaser-npm-publisher-action@v1.2.0
     with:
       token: ${{ secrets.NPM_AUTH_TOKEN }}
       prefix: @evg4b
@@ -113,5 +113,5 @@ steps:
     run: npm login ...
 
   - name: Build and publish NPM packages
-    uses: evg4b/goreleaser-npm-publisher-action@v1.0.0
+    uses: evg4b/goreleaser-npm-publisher-action@v1.2.0
 ```
