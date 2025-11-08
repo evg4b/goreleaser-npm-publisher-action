@@ -34,6 +34,9 @@ inputs:
   keywords:
     description: 'NPM package keywords'
     required: false
+  license:
+    description: 'Package license / SPDX identifier'
+    required: false
 
 runs:
   using: node20

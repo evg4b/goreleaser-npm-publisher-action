@@ -22,13 +22,15 @@ describe('index', () => {
       .mockReturnValueOnce('builder-value')
       .mockReturnValueOnce('prefix-value')
       .mockReturnValueOnce('description-value')
-      .mockReturnValueOnce('token-value');
+      .mockReturnValueOnce('token-value')
+      .mockReturnValueOnce('MIT');
 
     jest.mocked(boolean).mockReturnValueOnce(true);
 
     jest
       .mocked(stringArray)
-      .mockReturnValueOnce(['readme.md', 'license', 'authors.txt']);
+      .mockReturnValueOnce(['readme.md', 'license', 'authors.txt'])
+      .mockReturnValueOnce(['cli', 'action', 'github-action']);
 
     await run();
   });
@@ -65,6 +67,10 @@ describe('index', () => {
     expect(string).toHaveBeenCalledWith('token');
   });
 
+  it('should import license', () => {
+    expect(string).toHaveBeenCalledWith('license');
+  });
+
   it('should call publish', () => {
     expect(publish).toHaveBeenCalledWith({
       project: 'project-value',
@@ -74,6 +80,8 @@ describe('index', () => {
       description: 'description-value',
       files: ['readme.md', 'license', 'authors.txt'],
       token: 'token-value',
+      keywords: ['cli', 'action', 'github-action'],
+      license: 'MIT',
     });
   });
 });
