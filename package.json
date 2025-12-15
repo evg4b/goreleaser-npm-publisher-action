@@ -66,7 +66,7 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
+    "@actions/core": "^2.0.1",
     "goreleaser-npm-publisher": "^1.3.0"
   },
   "devDependencies": {
