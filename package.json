@@ -78,7 +78,7 @@
     "@vercel/ncc": "^0.38.4",
     "eslint": "^8.57.1",
     "eslint-plugin-jest": "^29.12.1",
-    "eslint-plugin-jsonc": "^2.21.0",
+    "eslint-plugin-jsonc": "^3.1.2",
     "eslint-plugin-prettier": "^5.5.5",
     "jest": "^30.2.0",
     "make-coverage-badge": "^1.2.0",
