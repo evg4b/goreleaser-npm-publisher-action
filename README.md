@@ -53,7 +53,7 @@ steps:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   - name: Build and publish NPM packages
-    uses: evg4b/goreleaser-npm-publisher-action@v1.2.0
+    uses: evg4b/goreleaser-npm-publisher-action@v1.6.0
     with:
       token: ${{ secrets.NPM_AUTH_TOKEN }}
       prefix: @evg4b
@@ -70,17 +70,22 @@ steps:
 
 Also, you can customize the packages with next options:
 
-| Option          | Type     | Description                                                                                 |
-| --------------- | -------- | ------------------------------------------------------------------------------------------- |
-| **project**     | string   | Specifies the path to the root of the Go package.                                           |
-| **builder**     | string   | The name of the builder whose output will be used for building the packages.                |
-| **clear**       | boolean  | Clean the `dist/npm` folder before the build.                                               |
-| **prefix**      | string   | NPM package scope prefix.                                                                   |
-| **description** | string   | NPM package description.                                                                    |
-| **files**       | string[] | Files that should be included in the NPM package (e.g., `README.md`, `LICENSE` by default). |
-| **keywords**    | string[] | NPM package keywords.                                                                       |
-| **token**       | string   | The NPM authentication token.                                                               |
-| **license**     | string   | Package license / SPDX identifier                                                           |
+| Option                   | Type     | Description                                                                                                           |
+| ------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| **project**              | string   | Path to the project root built by GoReleaser (`.` by default).                                                        |
+| **builder**              | string   | Name of the GoReleaser builder whose output is used to build the packages.                                            |
+| **clear**                | boolean  | Clear the `dist/npm` folder before building (`true` by default).                                                      |
+| **name**                 | string   | Base name for the npm packages (defaults to the GoReleaser project name).                                             |
+| **bin**                  | string   | Name of the installed command (defaults to the package name).                                                         |
+| **prefix**               | string   | Scope prefix for the npm packages.                                                                                    |
+| **repository**           | string   | Source repository URL for the npm packages (required for npm provenance).                                             |
+| **repository-type**      | string   | Type of the source repository (detected from the repository URL, `git` by default). One of `git`, `svn`, `hg`, `bzr`. |
+| **repository-directory** | string   | Directory of the package inside the source repository (for monorepos).                                                |
+| **description**          | string   | Description for the npm packages.                                                                                     |
+| **files**                | string[] | File globs to include in the npm packages (`README.md`, `LICENSE` by default).                                        |
+| **keywords**             | string[] | Keywords for the npm packages.                                                                                        |
+| **license**              | string   | License (SPDX identifier) for the npm packages.                                                                       |
+| **token**                | string   | Token for npm registry authentication.                                                                                |
 
 > [!NOTE]
 >
@@ -91,7 +96,7 @@ Also, you can customize the packages with next options:
 
 ## Authorization
 
-`goreleaser-npm-publishe`r recommends using the auth_token for authorization by
+`goreleaser-npm-publisher` recommends using the auth_token for authorization by
 passing it in the corresponding parameter. If you require a different type of
 authorization, you can run npm login before starting the action, which will also
 work.
@@ -115,5 +120,5 @@ steps:
     run: npm login ...
 
   - name: Build and publish NPM packages
-    uses: evg4b/goreleaser-npm-publisher-action@v1.2.0
+    uses: evg4b/goreleaser-npm-publisher-action@v1.6.0
 ```

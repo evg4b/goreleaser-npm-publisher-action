@@ -10,12 +10,17 @@ export async function run(): Promise<void> {
     project: string('project', cwd()),
     builder: string('builder'),
     clear: boolean('clear'),
+    name: string('name'),
+    bin: string('bin'),
     prefix: string('prefix'),
+    repository: string('repository'),
+    repositoryType: string('repository-type'),
+    repositoryDirectory: string('repository-directory'),
     description: string('description'),
     files: stringArray('files', ['README.md', 'LICENSE']),
     keywords: stringArray('keywords', []),
-    token: string('token'),
     license: string('license'),
+    token: string('token'),
   });
 
   logger.debug('Finished publishing');

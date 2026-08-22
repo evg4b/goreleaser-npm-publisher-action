@@ -5,37 +5,58 @@ author: 'Evgeny Abramovich'
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
   icon: 'package'
-  color: 'yellow'
+  color: 'gray-dark'
 
 # Define your inputs here.
 inputs:
   project:
-    description: 'Path to the project with was built by GoReleaser'
+    description: 'Path to the project root built by GoReleaser'
     required: false
   builder:
-    description: 'Name of the builder'
+    description:
+      'Name of the GoReleaser builder whose output is used to build the packages'
     required: false
   clear:
-    description: 'Clear the dist/npm folder before building the project'
+    description: 'Clear the dist/npm folder before building'
     required: false
-    default: true
+    default: 'true'
+  name:
+    description:
+      'Base name for the npm packages (defaults to the GoReleaser project name)'
+    required: false
+  bin:
+    description: 'Name of the installed command (defaults to the package name)'
+    required: false
   prefix:
-    description: 'Prefix for the npm package'
+    description: 'Scope prefix for the npm packages'
+    required: false
+  repository:
+    description:
+      'Source repository URL for the npm packages (required for npm provenance)'
+    required: false
+  repository-type:
+    description:
+      'Type of the source repository (detected from the repository URL, git by
+      default). One of git, svn, hg, bzr'
+    required: false
+  repository-directory:
+    description:
+      'Directory of the package inside the source repository (for monorepos)'
     required: false
   description:
-    description: 'Description for the npm package'
-    required: false
-  token:
-    description: 'Npm auth token'
+    description: 'Description for the npm packages'
     required: false
   files:
-    description: 'File globs to include in the npm package'
+    description: 'File globs to include in the npm packages'
     required: false
   keywords:
-    description: 'NPM package keywords'
+    description: 'Keywords for the npm packages'
     required: false
   license:
-    description: 'Package license / SPDX identifier'
+    description: 'License (SPDX identifier) for the npm packages'
+    required: false
+  token:
+    description: 'Token for npm registry authentication'
     required: false
 
 runs:

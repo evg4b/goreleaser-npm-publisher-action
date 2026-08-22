@@ -20,12 +20,17 @@ describe('index', () => {
       .mocked(string)
       .mockReturnValueOnce('project-value')
       .mockReturnValueOnce('builder-value')
+      .mockReturnValueOnce('name-value')
+      .mockReturnValueOnce('bin-value')
       .mockReturnValueOnce('prefix-value')
+      .mockReturnValueOnce('repository-value')
+      .mockReturnValueOnce('git')
+      .mockReturnValueOnce('repository-directory-value')
       .mockReturnValueOnce('description-value')
-      .mockReturnValueOnce('token-value')
-      .mockReturnValueOnce('MIT');
+      .mockReturnValueOnce('MIT')
+      .mockReturnValueOnce('token-value');
 
-    jest.mocked(boolean).mockReturnValueOnce(true);
+    jest.mocked(boolean).mockReturnValueOnce(true).mockReturnValueOnce(false);
 
     jest
       .mocked(stringArray)
@@ -47,8 +52,28 @@ describe('index', () => {
     expect(boolean).toHaveBeenCalledWith('clear');
   });
 
+  it('should import name', () => {
+    expect(string).toHaveBeenCalledWith('name');
+  });
+
+  it('should import bin', () => {
+    expect(string).toHaveBeenCalledWith('bin');
+  });
+
   it('should import prefix', () => {
     expect(string).toHaveBeenCalledWith('prefix');
+  });
+
+  it('should import repository', () => {
+    expect(string).toHaveBeenCalledWith('repository');
+  });
+
+  it('should import repository-type', () => {
+    expect(string).toHaveBeenCalledWith('repository-type');
+  });
+
+  it('should import repository-directory', () => {
+    expect(string).toHaveBeenCalledWith('repository-directory');
   });
 
   it('should import description', () => {
@@ -63,12 +88,12 @@ describe('index', () => {
     expect(stringArray).toHaveBeenCalledWith('keywords', []);
   });
 
-  it('should import token', () => {
-    expect(string).toHaveBeenCalledWith('token');
-  });
-
   it('should import license', () => {
     expect(string).toHaveBeenCalledWith('license');
+  });
+
+  it('should import token', () => {
+    expect(string).toHaveBeenCalledWith('token');
   });
 
   it('should call publish', () => {
@@ -76,12 +101,17 @@ describe('index', () => {
       project: 'project-value',
       builder: 'builder-value',
       clear: true,
+      name: 'name-value',
+      bin: 'bin-value',
       prefix: 'prefix-value',
+      repository: 'repository-value',
+      repositoryType: 'git',
+      repositoryDirectory: 'repository-directory-value',
       description: 'description-value',
       files: ['readme.md', 'license', 'authors.txt'],
-      token: 'token-value',
       keywords: ['cli', 'action', 'github-action'],
       license: 'MIT',
+      token: 'token-value',
     });
   });
 });
