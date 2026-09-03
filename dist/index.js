@@ -48970,6 +48970,7 @@ const goreleaser_npm_publisher_1 = __nccwpck_require__(3850);
 const node_process_1 = __nccwpck_require__(1708);
 const inputs_1 = __nccwpck_require__(8422);
 const logger_1 = __nccwpck_require__(4752);
+const repository_1 = __nccwpck_require__(3627);
 async function run() {
     logger_1.logger.debug(`Running publishing...`);
     await (0, goreleaser_npm_publisher_1.publish)({
@@ -48979,7 +48980,7 @@ async function run() {
         name: (0, inputs_1.string)('name'),
         bin: (0, inputs_1.string)('bin'),
         prefix: (0, inputs_1.string)('prefix'),
-        repository: (0, inputs_1.string)('repository'),
+        repository: (0, inputs_1.string)('repository', (0, repository_1.defaultRepository)()),
         repositoryType: (0, inputs_1.string)('repository-type'),
         repositoryDirectory: (0, inputs_1.string)('repository-directory'),
         description: (0, inputs_1.string)('description'),
@@ -48990,6 +48991,37 @@ async function run() {
     });
     logger_1.logger.debug('Finished publishing');
 }
+
+
+/***/ }),
+
+/***/ 3627:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.defaultRepository = void 0;
+const node_process_1 = __nccwpck_require__(1708);
+/**
+ * Builds the source repository URL from the GitHub Actions environment.
+ *
+ * npm requires the published `repository` field to match, case-sensitively,
+ * the repository the package is built in, otherwise the registry rejects the
+ * provenance attestation. npm derives the attested URI from GITHUB_SERVER_URL
+ * and GITHUB_REPOSITORY, so deriving the default from the same variables keeps
+ * the two in step without the caller restating it.
+ *
+ * Returns undefined outside GitHub Actions, leaving `repository` unset.
+ */
+const defaultRepository = () => {
+    const { GITHUB_SERVER_URL, GITHUB_REPOSITORY } = node_process_1.env;
+    if (!GITHUB_SERVER_URL || !GITHUB_REPOSITORY) {
+        return undefined;
+    }
+    return `git+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git`;
+};
+exports.defaultRepository = defaultRepository;
 
 
 /***/ }),

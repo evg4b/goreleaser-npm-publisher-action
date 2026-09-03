@@ -78,7 +78,7 @@ Also, you can customize the packages with next options:
 | **name**                 | string   | Base name for the npm packages (defaults to the GoReleaser project name).                                             |
 | **bin**                  | string   | Name of the installed command (defaults to the package name).                                                         |
 | **prefix**               | string   | Scope prefix for the npm packages.                                                                                    |
-| **repository**           | string   | Source repository URL for the npm packages (required for npm provenance).                                             |
+| **repository**           | string   | Source repository URL for the npm packages (required for npm provenance, defaults to the current repository).         |
 | **repository-type**      | string   | Type of the source repository (detected from the repository URL, `git` by default). One of `git`, `svn`, `hg`, `bzr`. |
 | **repository-directory** | string   | Directory of the package inside the source repository (for monorepos).                                                |
 | **description**          | string   | Description for the npm packages.                                                                                     |

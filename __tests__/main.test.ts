@@ -9,6 +9,10 @@ jest.mock('../src/inputs', () => ({
   stringArray: jest.fn(),
 }));
 
+jest.mock('../src/repository', () => ({
+  defaultRepository: jest.fn(() => 'default-repository-value'),
+}));
+
 import { publish } from 'goreleaser-npm-publisher';
 import { cwd } from 'node:process';
 import { boolean, string, stringArray } from '../src/inputs';
@@ -65,7 +69,10 @@ describe('index', () => {
   });
 
   it('should import repository', () => {
-    expect(string).toHaveBeenCalledWith('repository');
+    expect(string).toHaveBeenCalledWith(
+      'repository',
+      'default-repository-value',
+    );
   });
 
   it('should import repository-type', () => {

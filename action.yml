@@ -32,7 +32,8 @@ inputs:
     required: false
   repository:
     description:
-      'Source repository URL for the npm packages (required for npm provenance)'
+      'Source repository URL for the npm packages (required for npm provenance,
+      defaults to the current repository)'
     required: false
   repository-type:
     description:
