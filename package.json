@@ -1,7 +1,7 @@
 {
   "name": "typescript-action",
   "description": "GitHub Actions TypeScript template",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "author": "",
   "private": true,
   "homepage": "https://github.com/actions/typescript-action",
