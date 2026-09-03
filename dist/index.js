@@ -49003,17 +49003,6 @@ async function run() {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.defaultRepository = void 0;
 const node_process_1 = __nccwpck_require__(1708);
-/**
- * Builds the source repository URL from the GitHub Actions environment.
- *
- * npm requires the published `repository` field to match, case-sensitively,
- * the repository the package is built in, otherwise the registry rejects the
- * provenance attestation. npm derives the attested URI from GITHUB_SERVER_URL
- * and GITHUB_REPOSITORY, so deriving the default from the same variables keeps
- * the two in step without the caller restating it.
- *
- * Returns undefined outside GitHub Actions, leaving `repository` unset.
- */
 const defaultRepository = () => {
     const { GITHUB_SERVER_URL, GITHUB_REPOSITORY } = node_process_1.env;
     if (!GITHUB_SERVER_URL || !GITHUB_REPOSITORY) {

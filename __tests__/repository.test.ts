@@ -1,52 +1,76 @@
-import { env } from 'node:process';
+const envMock: Record<string, string | undefined> = {
+  GITHUB_SERVER_URL: 'https://github.com',
+  GITHUB_REPOSITORY: 'evg4b/goreleaser-npm-publisher-action',
+};
+
+jest.mock('node:process', () => ({
+  env: envMock,
+}));
+
 import { defaultRepository } from '../src/repository';
 
 describe('defaultRepository', () => {
-  const { GITHUB_SERVER_URL, GITHUB_REPOSITORY } = env;
+  const cases = [
+    {
+      name: 'should build the url from the github environment',
+      GITHUB_SERVER_URL: 'https://github.com',
+      GITHUB_REPOSITORY: 'evg4b/goreleaser-npm-publisher-action',
+      expected:
+        'git+https://github.com/evg4b/goreleaser-npm-publisher-action.git',
+    },
+    {
+      name: 'should preserve the case of the repository',
+      GITHUB_SERVER_URL: 'https://github.com',
+      GITHUB_REPOSITORY: 'Flagsmith/flagsmith-CLI',
+      expected: 'git+https://github.com/Flagsmith/flagsmith-CLI.git',
+    },
+    {
+      name: 'should support github enterprise servers',
+      GITHUB_SERVER_URL: 'https://github.example.com',
+      GITHUB_REPOSITORY: 'evg4b/repo',
+      expected: 'git+https://github.example.com/evg4b/repo.git',
+    },
+    {
+      name: 'should return undefined without a server url',
+      GITHUB_SERVER_URL: undefined,
+      GITHUB_REPOSITORY: 'evg4b/repo',
+      expected: undefined,
+    },
+    {
+      name: 'should return undefined without a repository',
+      GITHUB_SERVER_URL: 'https://github.com',
+      GITHUB_REPOSITORY: undefined,
+      expected: undefined,
+    },
+    {
+      name: 'should return undefined without a server url and repository',
+      GITHUB_SERVER_URL: undefined,
+      GITHUB_REPOSITORY: undefined,
+      expected: undefined,
+    },
+  ];
 
-  afterEach(() => {
-    env.GITHUB_SERVER_URL = GITHUB_SERVER_URL;
-    env.GITHUB_REPOSITORY = GITHUB_REPOSITORY;
-  });
+  describe.each(cases)(
+    '$name',
+    ({ GITHUB_REPOSITORY, GITHUB_SERVER_URL, expected }) => {
+      beforeEach(() => {
+        if (typeof envMock.GITHUB_SERVER_URL !== 'undefined') {
+          envMock.GITHUB_SERVER_URL = GITHUB_SERVER_URL;
+        } else {
+          delete envMock.GITHUB_SERVER_URL;
+        }
 
-  it('should build the url from the github environment', () => {
-    env.GITHUB_SERVER_URL = 'https://github.com';
-    env.GITHUB_REPOSITORY = 'evg4b/goreleaser-npm-publisher-action';
+        if (typeof envMock.GITHUB_REPOSITORY !== 'undefined') {
+          envMock.GITHUB_REPOSITORY = GITHUB_REPOSITORY;
+        } else {
+          delete envMock.GITHUB_REPOSITORY;
+        }
+      });
 
-    expect(defaultRepository()).toEqual(
-      'git+https://github.com/evg4b/goreleaser-npm-publisher-action.git',
-    );
-  });
-
-  it('should preserve the case of the repository', () => {
-    env.GITHUB_SERVER_URL = 'https://github.com';
-    env.GITHUB_REPOSITORY = 'Flagsmith/flagsmith-CLI';
-
-    expect(defaultRepository()).toEqual(
-      'git+https://github.com/Flagsmith/flagsmith-CLI.git',
-    );
-  });
-
-  it('should support github enterprise servers', () => {
-    env.GITHUB_SERVER_URL = 'https://github.example.com';
-    env.GITHUB_REPOSITORY = 'evg4b/repo';
-
-    expect(defaultRepository()).toEqual(
-      'git+https://github.example.com/evg4b/repo.git',
-    );
-  });
-
-  it('should return undefined without a server url', () => {
-    delete env.GITHUB_SERVER_URL;
-    env.GITHUB_REPOSITORY = 'evg4b/repo';
-
-    expect(defaultRepository()).toBeUndefined();
-  });
-
-  it('should return undefined without a repository', () => {
-    env.GITHUB_SERVER_URL = 'https://github.com';
-    delete env.GITHUB_REPOSITORY;
-
-    expect(defaultRepository()).toBeUndefined();
-  });
+      it(`should return ${expected}`, () => {
+        const result = defaultRepository();
+        expect(result).toBe(expected);
+      });
+    },
+  );
 });
