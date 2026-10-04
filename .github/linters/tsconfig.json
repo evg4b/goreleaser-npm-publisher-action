@@ -5,6 +5,10 @@
     "noEmit": true,
     "types": ["node", "jest"]
   },
-  "include": ["../../__tests__/**/*", "../../src/**/*"],
+  "include": [
+    "../../__fixtures__/**/*",
+    "../../__tests__/**/*",
+    "../../src/**/*"
+  ],
   "exclude": ["../../dist", "../../node_modules", "../../coverage", "*.json"]
 }

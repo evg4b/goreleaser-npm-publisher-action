@@ -1,24 +1,22 @@
-import { jest } from '@jest/globals';
-import { cwd } from 'node:process';
-
-jest.unstable_mockModule('goreleaser-npm-publisher', () => ({
+jest.mock('goreleaser-npm-publisher', () => ({
   publish: jest.fn(),
   setLogger: jest.fn(),
 }));
 
-jest.unstable_mockModule('../src/inputs.js', () => ({
+jest.mock('../src/inputs', () => ({
   boolean: jest.fn(),
   string: jest.fn(),
   stringArray: jest.fn(),
 }));
 
-jest.unstable_mockModule('../src/repository.js', () => ({
+jest.mock('../src/repository', () => ({
   defaultRepository: jest.fn(() => 'default-repository-value'),
 }));
 
-const { publish } = await import('goreleaser-npm-publisher');
-const { boolean, string, stringArray } = await import('../src/inputs.js');
-const { run } = await import('../src/main.js');
+import { publish } from 'goreleaser-npm-publisher';
+import { cwd } from 'node:process';
+import { boolean, string, stringArray } from '../src/inputs';
+import { run } from '../src/main';
 
 describe('index', () => {
   beforeEach(async () => {

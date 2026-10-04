@@ -1,15 +1,13 @@
-import { jest } from '@jest/globals';
-
 const envMock: Record<string, string | undefined> = {
   GITHUB_SERVER_URL: 'https://github.com',
   GITHUB_REPOSITORY: 'evg4b/goreleaser-npm-publisher-action',
 };
 
-jest.unstable_mockModule('node:process', () => ({
+jest.mock('node:process', () => ({
   env: envMock,
 }));
 
-const { defaultRepository } = await import('../src/repository.js');
+import { defaultRepository } from '../src/repository';
 
 describe('defaultRepository', () => {
   const cases = [
