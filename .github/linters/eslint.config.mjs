@@ -4,16 +4,31 @@ import js from '@eslint/js';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import jest from 'eslint-plugin-jest';
+import jsonc from 'eslint-plugin-jsonc';
 import globals from 'globals';
+import { resolve } from 'node:path';
+
+const rootDir = resolve(import.meta.dirname, '../..');
+
+// Also used by super-linter for JSON files, so the JavaScript and TypeScript
+// configs are scoped to source files.
+const sourceFiles = ['**/*.{js,mjs,cjs,ts}'];
 
 export default [
   {
     ignores: ['lib/', 'dist/', 'coverage/'],
   },
-  js.configs.recommended,
-  ...typescriptEslint.configs['flat/recommended'],
-  jest.configs['flat/recommended'],
+  ...jsonc.configs['flat/recommended-with-json'].map(config => ({
+    ...config,
+    files: ['**/*.json'],
+  })),
+  ...[
+    js.configs.recommended,
+    ...typescriptEslint.configs['flat/recommended'],
+    jest.configs['flat/recommended'],
+  ].map(config => ({ files: sourceFiles, ...config })),
   {
+    files: sourceFiles,
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
@@ -36,7 +51,7 @@ export default [
       parser: tsParser,
       parserOptions: {
         project: ['./.github/linters/tsconfig.json', './tsconfig.json'],
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: rootDir,
       },
     },
     rules: {
