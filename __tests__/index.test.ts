@@ -1,9 +1,15 @@
-const runMock = jest.fn().mockName('main.run').mockResolvedValueOnce(undefined);
+import { jest } from '@jest/globals';
+import type { run } from '../src/main.js';
+
+const runMock = jest
+  .fn<typeof run>()
+  .mockName('main.run')
+  .mockResolvedValueOnce(undefined);
 
 const setFailedMock = jest.fn().mockName('@actions/core.setFailed');
 
-jest.mock('../src/main', () => ({ run: runMock }));
-jest.mock('@actions/core', () => ({ setFailed: setFailedMock }));
+jest.unstable_mockModule('../src/main.js', () => ({ run: runMock }));
+jest.unstable_mockModule('@actions/core', () => ({ setFailed: setFailedMock }));
 
 describe('index', () => {
   beforeEach(() => {
@@ -13,11 +19,10 @@ describe('index', () => {
   });
 
   it('calls run when imported', async () => {
-    jest.isolateModules(() => {
+    await jest.isolateModulesAsync(async () => {
       runMock.mockResolvedValueOnce(void 0);
 
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require('../src/index');
+      await import('../src/index.js');
 
       expect(runMock).toHaveBeenCalled();
       expect(setFailedMock).not.toHaveBeenCalled();

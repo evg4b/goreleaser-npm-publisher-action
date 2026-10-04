@@ -1,4 +1,4 @@
-import { fmt } from '../src/helpres';
+import { fmt } from '../src/helpres.js';
 
 describe('fmt', () => {
   const testCases = [

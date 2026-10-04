@@ -1,10 +1,12 @@
+import { jest } from '@jest/globals';
+
 const groupMock = jest.fn();
 const infoMock = jest.fn();
 const warningMock = jest.fn();
 const errorMock = jest.fn();
 const debugMock = jest.fn();
 
-jest.mock('@actions/core', () => ({
+jest.unstable_mockModule('@actions/core', () => ({
   group: groupMock,
   info: infoMock,
   warning: warningMock,
@@ -12,17 +14,18 @@ jest.mock('@actions/core', () => ({
   debug: debugMock,
 }));
 
-import { GithubActionLogger } from '../../src/logger/github-action-logger';
+const { GithubActionLogger } =
+  await import('../../src/logger/github-action-logger.js');
 
 describe('GithubActionLogger', () => {
-  let logger: GithubActionLogger;
+  let logger: InstanceType<typeof GithubActionLogger>;
 
   beforeEach(() => {
     logger = new GithubActionLogger();
   });
 
   it('group', () => {
-    const fn = jest.fn();
+    const fn = jest.fn<() => Promise<void>>();
 
     logger.group('group', fn);
 

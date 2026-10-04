@@ -1,10 +1,12 @@
-jest.mock('@actions/core', () => ({
+import { jest } from '@jest/globals';
+
+jest.unstable_mockModule('@actions/core', () => ({
   getInput: jest.fn(),
   getMultilineInput: jest.fn(),
   getBooleanInput: jest.fn(),
 }));
 
-jest.mock('../src/logger', () => ({
+jest.unstable_mockModule('../src/logger/index.js', () => ({
   logger: {
     error: jest.fn(),
     warn: jest.fn(),
@@ -13,8 +15,8 @@ jest.mock('../src/logger', () => ({
   },
 }));
 
-import { getBooleanInput, getInput } from '@actions/core';
-import { boolean, string, stringArray } from '../src/inputs';
+const { getBooleanInput, getInput } = await import('@actions/core');
+const { boolean, string, stringArray } = await import('../src/inputs.js');
 
 describe('string', () => {
   it('should return undefined for unknown input', () => {
