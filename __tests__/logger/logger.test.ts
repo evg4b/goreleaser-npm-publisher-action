@@ -7,8 +7,8 @@ jest.unstable_mockModule('goreleaser-npm-publisher', () => ({
 }));
 
 const { logger } = await import('../../src/logger/index.js');
-const { GithubActionLogger } =
-  await import('../../src/logger/github-action-logger.js');
+const loggerModule = await import('../../src/logger/github-action-logger.js');
+const { GithubActionLogger } = loggerModule;
 
 describe('logger', () => {
   it('should export logger', () => {

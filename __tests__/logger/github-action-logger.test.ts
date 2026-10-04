@@ -14,8 +14,8 @@ jest.unstable_mockModule('@actions/core', () => ({
   debug: debugMock,
 }));
 
-const { GithubActionLogger } =
-  await import('../../src/logger/github-action-logger.js');
+const loggerModule = await import('../../src/logger/github-action-logger.js');
+const { GithubActionLogger } = loggerModule;
 
 describe('GithubActionLogger', () => {
   let logger: InstanceType<typeof GithubActionLogger>;
