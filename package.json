@@ -73,7 +73,7 @@
     "@jest/globals": "^30.5.2",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.13.3",
-    "@typescript-eslint/eslint-plugin": "^8.69.0",
+    "@typescript-eslint/eslint-plugin": "^8.71.0",
     "@typescript-eslint/parser": "^8.71.0",
     "@vercel/ncc": "^0.45.0",
     "eslint": "^8.57.1",
