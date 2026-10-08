@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "jest"],
+    "rootDir": ".",
+    "allowJs": true,
+    "noEmit": true
+  },
+  "include": ["src", "__tests__", "__fixtures__", "*.js", "*.mjs"],
+  "exclude": ["dist", "node_modules", "coverage"]
+}

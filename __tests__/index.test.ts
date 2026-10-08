@@ -1,26 +1,19 @@
-const runMock = jest.fn().mockName('main.run').mockResolvedValueOnce(undefined);
+import { describe, expect, it, jest } from '@jest/globals';
+import * as core from '../__fixtures__/core';
 
-const setFailedMock = jest.fn().mockName('@actions/core.setFailed');
+const run = jest.fn<() => Promise<void>>();
 
-jest.mock('../src/main', () => ({ run: runMock }));
-jest.mock('@actions/core', () => ({ setFailed: setFailedMock }));
+// Mocks should be declared before the module being tested is imported.
+jest.unstable_mockModule('@actions/core', () => core);
+jest.unstable_mockModule('../src/main', () => ({ run }));
 
 describe('index', () => {
-  beforeEach(() => {
-    jest.resetModules();
-    runMock.mockReset();
-    setFailedMock.mockReset();
-  });
-
   it('calls run when imported', async () => {
-    jest.isolateModules(() => {
-      runMock.mockResolvedValueOnce(void 0);
+    run.mockResolvedValueOnce(undefined);
 
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require('../src/index');
+    await import('../src/index');
 
-      expect(runMock).toHaveBeenCalled();
-      expect(setFailedMock).not.toHaveBeenCalled();
-    });
+    expect(run).toHaveBeenCalled();
+    expect(core.setFailed).not.toHaveBeenCalled();
   });
 });

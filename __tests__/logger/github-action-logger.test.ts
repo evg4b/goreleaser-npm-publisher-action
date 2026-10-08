@@ -1,28 +1,26 @@
-const groupMock = jest.fn();
-const infoMock = jest.fn();
-const warningMock = jest.fn();
-const errorMock = jest.fn();
-const debugMock = jest.fn();
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import * as core from '../../__fixtures__/core';
 
-jest.mock('@actions/core', () => ({
+jest.unstable_mockModule('@actions/core', () => core);
+
+const { GithubActionLogger } =
+  await import('../../src/logger/github-action-logger');
+const {
   group: groupMock,
   info: infoMock,
   warning: warningMock,
   error: errorMock,
   debug: debugMock,
-}));
-
-import { GithubActionLogger } from '../../src/logger/github-action-logger';
-
+} = core;
 describe('GithubActionLogger', () => {
-  let logger: GithubActionLogger;
+  let logger: InstanceType<typeof GithubActionLogger>;
 
   beforeEach(() => {
     logger = new GithubActionLogger();
   });
 
   it('group', () => {
-    const fn = jest.fn();
+    const fn = jest.fn<() => Promise<void>>();
 
     logger.group('group', fn);
 
