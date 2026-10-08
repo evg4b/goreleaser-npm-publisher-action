@@ -4,6 +4,7 @@
   "version": "1.6.1",
   "author": "",
   "private": true,
+  "type": "module",
   "homepage": "https://github.com/actions/typescript-action",
   "repository": {
     "type": "git",
@@ -52,9 +53,28 @@
       "/node_modules/",
       "/dist/"
     ],
-    "transform": {
-      "^.+\\.ts$": "ts-jest"
+    "moduleNameMapper": {
+      "^@actions/core$": "<rootDir>/node_modules/@actions/core/lib/core.js",
+      "^@actions/exec$": "<rootDir>/node_modules/@actions/exec/lib/exec.js",
+      "^@actions/io$": "<rootDir>/node_modules/@actions/io/lib/io.js",
+      "^@actions/http-client$": "<rootDir>/node_modules/@actions/http-client/lib/index.js",
+      "^@actions/(io|http-client)/lib/(.*)$": "<rootDir>/node_modules/@actions/$1/lib/$2.js"
     },
+    "transform": {
+      "^.+\\.[tj]s$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "module": "CommonJS",
+            "moduleResolution": "Node10",
+            "allowJs": true
+          }
+        }
+      ]
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!@actions/)"
+    ],
     "coverageReporters": [
       "json-summary",
       "text",
@@ -66,7 +86,7 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
+    "@actions/core": "^3.0.1",
     "goreleaser-npm-publisher": "^1.6.0"
   },
   "devDependencies": {
