@@ -1,6 +1,6 @@
 import { getBooleanInput, getInput } from '@actions/core';
-import { fmt } from './helpres.js';
-import { logger } from './logger/index.js';
+import { fmt } from './helpres';
+import { logger } from './logger';
 
 const undefinedIfEmpty = (value: string | undefined): string | undefined => {
   return value && value?.length > 0 ? value : undefined;
