@@ -44,6 +44,10 @@ jobs:
         id: install
         run: yarn install --immutable
 
+      - name: Remove dist/ Directory
+        id: remove-dist
+        run: yarn rimraf ./dist
+
       - name: Build dist/ Directory
         id: build
         run: yarn run bundle

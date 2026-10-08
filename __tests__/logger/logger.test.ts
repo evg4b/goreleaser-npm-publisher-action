@@ -1,13 +1,14 @@
-import { type Logger } from 'goreleaser-npm-publisher';
+import { describe, expect, it, jest } from '@jest/globals';
+import type { Logger } from 'goreleaser-npm-publisher';
 
 let setLogger: Logger | undefined = undefined;
-jest.mock('goreleaser-npm-publisher', () => ({
+jest.unstable_mockModule('goreleaser-npm-publisher', () => ({
   setLogger: (newLogger: Logger) => (setLogger = newLogger),
 }));
 
-import { logger } from '../../src/logger';
-import { GithubActionLogger } from '../../src/logger/github-action-logger';
-
+const { logger } = await import('../../src/logger/index');
+const { GithubActionLogger } =
+  await import('../../src/logger/github-action-logger');
 describe('logger', () => {
   it('should export logger', () => {
     expect(logger).toBeDefined();

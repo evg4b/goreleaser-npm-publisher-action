@@ -1,3 +1,5 @@
+.DS_Store
+.yarn/
 dist/
 node_modules/
 coverage/

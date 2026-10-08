@@ -1,6 +1,6 @@
 {
   "name": "GitHub Actions (TypeScript)",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:24",
   "postCreateCommand": "corepack enable && yarn install --immutable",
   "customizations": {
     "codespaces": {
@@ -36,6 +36,6 @@
   },
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers-contrib/features/prettier:1": {}
+    "ghcr.io/devcontainers-community/npm-features/prettier:1": {}
   }
 }

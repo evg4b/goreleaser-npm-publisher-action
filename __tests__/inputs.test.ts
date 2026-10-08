@@ -1,21 +1,12 @@
-jest.mock('@actions/core', () => ({
-  getInput: jest.fn(),
-  getMultilineInput: jest.fn(),
-  getBooleanInput: jest.fn(),
-}));
+import { describe, expect, it, jest } from '@jest/globals';
+import * as core from '../__fixtures__/core';
+import { logger } from '../__fixtures__/logger';
 
-jest.mock('../src/logger', () => ({
-  logger: {
-    error: jest.fn(),
-    warn: jest.fn(),
-    info: jest.fn(),
-    debug: jest.fn(),
-  },
-}));
+jest.unstable_mockModule('@actions/core', () => core);
+jest.unstable_mockModule('../src/logger/index', () => ({ logger }));
 
-import { getBooleanInput, getInput } from '@actions/core';
-import { boolean, string, stringArray } from '../src/inputs';
-
+const { boolean, string, stringArray } = await import('../src/inputs');
+const { getBooleanInput, getInput } = core;
 describe('string', () => {
   it('should return undefined for unknown input', () => {
     const value = string('prefix');
@@ -32,7 +23,7 @@ describe('string', () => {
   });
 
   it('should return value', () => {
-    jest.mocked(getInput).mockReturnValueOnce('test-value');
+    getInput.mockReturnValueOnce('test-value');
 
     const value = string('project');
 
@@ -43,7 +34,7 @@ describe('string', () => {
 
 describe('boolean', () => {
   it('should return true', () => {
-    jest.mocked(getBooleanInput).mockReturnValueOnce(true);
+    getBooleanInput.mockReturnValueOnce(true);
 
     const value = boolean('clean');
 
@@ -52,7 +43,7 @@ describe('boolean', () => {
   });
 
   it('should return false', () => {
-    jest.mocked(getBooleanInput).mockReturnValueOnce(false);
+    getBooleanInput.mockReturnValueOnce(false);
 
     const value = boolean('clean');
 
@@ -72,7 +63,7 @@ describe('stringArray', () => {
   });
 
   it('should return value', () => {
-    jest.mocked(getInput).mockReturnValueOnce('license\nreadme.md');
+    getInput.mockReturnValueOnce('license\nreadme.md');
 
     const value = stringArray('files');
 

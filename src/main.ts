@@ -1,7 +1,7 @@
 import { publish } from 'goreleaser-npm-publisher';
 import { cwd } from 'node:process';
 import { boolean, string, stringArray } from './inputs';
-import { logger } from './logger';
+import { logger } from './logger/index';
 import { defaultRepository } from './repository';
 
 export async function run(): Promise<void> {

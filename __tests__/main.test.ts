@@ -1,27 +1,27 @@
-jest.mock('goreleaser-npm-publisher', () => ({
-  publish: jest.fn(),
-  setLogger: jest.fn(),
-}));
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { cwd } from 'node:process';
+import * as publisher from '../__fixtures__/goreleaser-npm-publisher';
 
-jest.mock('../src/inputs', () => ({
-  boolean: jest.fn(),
-  string: jest.fn(),
-  stringArray: jest.fn(),
-}));
+const boolean = jest.fn<typeof import('../src/inputs').boolean>();
+const string = jest.fn<typeof import('../src/inputs').string>();
+const stringArray = jest.fn<typeof import('../src/inputs').stringArray>();
 
-jest.mock('../src/repository', () => ({
+jest.unstable_mockModule('goreleaser-npm-publisher', () => publisher);
+jest.unstable_mockModule('../src/inputs', () => ({
+  boolean,
+  string,
+  stringArray,
+}));
+jest.unstable_mockModule('../src/repository', () => ({
   defaultRepository: jest.fn(() => 'default-repository-value'),
 }));
 
-import { publish } from 'goreleaser-npm-publisher';
-import { cwd } from 'node:process';
-import { boolean, string, stringArray } from '../src/inputs';
-import { run } from '../src/main';
+const { run } = await import('../src/main');
+const { publish } = publisher;
 
 describe('index', () => {
   beforeEach(async () => {
-    jest
-      .mocked(string)
+    string
       .mockReturnValueOnce('project-value')
       .mockReturnValueOnce('builder-value')
       .mockReturnValueOnce('name-value')
@@ -34,10 +34,9 @@ describe('index', () => {
       .mockReturnValueOnce('MIT')
       .mockReturnValueOnce('token-value');
 
-    jest.mocked(boolean).mockReturnValueOnce(true).mockReturnValueOnce(false);
+    boolean.mockReturnValueOnce(true).mockReturnValueOnce(false);
 
-    jest
-      .mocked(stringArray)
+    stringArray
       .mockReturnValueOnce(['readme.md', 'license', 'authors.txt'])
       .mockReturnValueOnce(['cli', 'action', 'github-action']);
 
